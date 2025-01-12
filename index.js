@@ -72,7 +72,22 @@ bot.on('message', (msg) => {
         default:
             return false;
     }
-})
+});
+
+bot.on("shipping_query", (shippingQuery) => {
+    const userId = shippingQuery.from.id;
+    let tickets = data.prepare(`SELECT * FROM users WHERE tgid = '${userId}'`).get().tickets;
+    data.prepare(`UPDATE users SET tickets = '${tickets + 1}' WHERE tgid = '${userId}'`).run();
+    bot.answerShippingQuery(shippingQuery.id, true, [
+        {
+            id: "ticket",
+            title: "Билет",
+            description: "Билет для участия в розыгрыше",
+            currency: "XTR",
+            total_amount: 1,
+        },
+    ]);
+});
 
 bot.on("polling_error", (err) => {
     console.log(err)
