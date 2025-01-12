@@ -12,20 +12,28 @@ const bot = new TelegramBot(process.env.TOKEN, {
     onlyFirstMatch: true,
 });
 
+
 bot.onText(/\/start/, (msg, match) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     const username = msg.from.username;
-    data.prepare(`INSERT OR IGNORE INTO users(tgid, name, tickets) VALUES (${userId}, '${username}, 0')`).run();
+    data.prepare(`INSERT OR IGNORE INTO users(tgid, name, tickets) VALUES (${userId}, '${username}', 0)`).run();
     bot.sendMessage(
         chatId,
         `Примите участие в розыгрыше призов и станьте победителем!
-Для того, чтобы участвовать, необходимо купить билет.`
+Для того, чтобы участвовать, необходимо купить билет.`, {
+    "reply_markup": {
+        "keyboard": [["Купить билет", "Проверить количество билетов"]]
+    }
+}
     );
 });
 
 bot.onText(/\/help/, (msg, match) => {
     const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    const username = msg.from.username;
+    data.prepare(`INSERT OR IGNORE INTO users(tgid, name, tickets) VALUES (${userId}, '${username}', 0)`).run();
     bot.sendMessage(
         chatId,
         `/ticket - купить билеты
@@ -35,5 +43,37 @@ bot.onText(/\/help/, (msg, match) => {
 
 bot.onText(/\/ticket/, (msg, match) => {
     const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    const username = msg.from.username;
+    data.prepare(`INSERT OR IGNORE INTO users(tgid, name, tickets) VALUES (${userId}, '${username}', 0)`).run();
     bot.sendInvoice(chatId, "Билет для участия в розыгрыше", "Купив билет, вы получите шанс стать победителем в следующем розыгрыше!", "ticket", "", "XTR", [ { label: "Ticket", amount: 1, }, ])
+});
+
+bot.onText(/\/stats/, (msg, match) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    const username = msg.from.username;
+    data.prepare(`INSERT OR IGNORE INTO users(tgid, name, tickets) VALUES (${userId}, '${username}', 0)`).run();
+    let tickets = data.prepare(`SELECT * FROM users WHERE tgid = '${userId}'`).get().tickets;
+    bot.sendMessage(chatId, `Количество билетов: ${tickets}`)
+});
+
+bot.on('message', (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+    switch (msg.text) {
+        case "Купить билет": {
+            return bot.sendInvoice(chatId, "Билет для участия в розыгрыше", "Купив билет, вы получите шанс стать победителем в следующем розыгрыше!", "ticket", "", "XTR", [ { label: "Ticket", amount: 1, }, ]);
+        }
+        case "Проверить количество билетов": {
+            let tickets = data.prepare(`SELECT * FROM users WHERE tgid = '${userId}'`).get().tickets;
+            return bot.sendMessage(chatId, `Количество билетов: ${tickets}`)
+        }
+        default:
+            return false;
+    }
+})
+
+bot.on("polling_error", (err) => {
+    console.log(err)
 });
