@@ -2,10 +2,14 @@ require("dotenv/config");
 
 const TelegramBot = require("node-telegram-bot-api");
 
+const cron = require("cron");
+
 const sql = require("better-sqlite3");
 let data = new sql("./data/users.db");
+let lottery = new sql("./data/lottery.db");
 
 data.prepare("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT, tgid STRING UNIQUE, name STRING, tickets INTEGER)").run();
+lottery.prepare("CREATE TABLE IF NOT EXISTS lottery(id INTEGER PRIMARY KEY AUTOINCREMENT, prize STRING, date STRING, seats INTEGER)").run();
 
 const bot = new TelegramBot(process.env.TOKEN, {
     polling: true,
